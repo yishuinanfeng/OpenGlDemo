@@ -20,8 +20,12 @@ public class WlRender implements GLSurfaceView.Renderer {
 
     private final float[] vertexData = {
             -1f, 0f,
+            0f, -1f,
             0f, 1f,
             1f, 0f
+//            0f, 1f,
+//            0f, -1f,
+//            1f, 0f
     };
 
     private FloatBuffer vertexBuffer;
@@ -39,12 +43,12 @@ public class WlRender implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
         try {
-            String vertexSource = WlShaderUtil.readRawTExt(context,R.raw.vertex_shader);
-            String fragmentSource = WlShaderUtil.readRawTExt(context,R.raw.fragment_shader);
-            program = WlShaderUtil.createProgram(vertexSource,fragmentSource);
-            if (program >0){
-                avPosition = GLES20.glGetAttribLocation(program,"av_Position");
-                afColor = GLES20.glGetUniformLocation(program,"af_Color");
+            String vertexSource = WlShaderUtil.readRawTExt(context, R.raw.vertex_shader);
+            String fragmentSource = WlShaderUtil.readRawTExt(context, R.raw.fragment_shader);
+            program = WlShaderUtil.createProgram(vertexSource, fragmentSource);
+            if (program > 0) {
+                avPosition = GLES20.glGetAttribLocation(program, "av_Position");
+                afColor = GLES20.glGetUniformLocation(program, "af_Color");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -59,14 +63,14 @@ public class WlRender implements GLSurfaceView.Renderer {
     @Override
     public void onDrawFrame(GL10 gl10) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-    //    GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        //    GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         GLES20.glUseProgram(program);
 
-        GLES20.glUniform4f(afColor,1f,1f,0f,1f);
+        GLES20.glUniform4f(afColor, 1f, 1f, 0f, 1f);
 
         GLES20.glEnableVertexAttribArray(avPosition);
-        GLES20.glVertexAttribPointer(avPosition,2,GLES20.GL_FLOAT,false,8
-                ,vertexBuffer);
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,3);
+        GLES20.glVertexAttribPointer(avPosition, 2, GLES20.GL_FLOAT, false, 8
+                , vertexBuffer);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
     }
 }
