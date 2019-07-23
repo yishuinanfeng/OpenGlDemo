@@ -1,8 +1,11 @@
 package com.example.opengldemo;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.opengl.GLUtils;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -16,19 +19,43 @@ public class WlRender implements GLSurfaceView.Renderer {
     private Context context;
     private int program;
     private int avPosition;
-    private int afColor;
+    //纹理坐标
+    private int afPosition;
+    private int sTexture;
+    private int textureId;
+    //private int afColor;
 
     private final float[] vertexData = {
-            -1f, 0f,
-            0f, -1f,
-            0f, 1f,
-            1f, 0f
+            -1f, -1f,
+            1f, -1f,
+            -1f, 1f,
+            1f, 1f
 //            0f, 1f,
 //            0f, -1f,
 //            1f, 0f
     };
 
+    private final float[] textureData = {
+//            0f, 1f,
+//            1f, 1f,
+//            0f, 0f,
+//            1f, 0f
+            0f,0f,
+            1f,0f,
+            0f,1f,
+            1f,1f
+
+
+
+//            0f,0f,
+//            0.5f,0f,
+//            0f,1f,
+//            0.5f,1f
+
+    };
+
     private FloatBuffer vertexBuffer;
+    private FloatBuffer textureBuffer;
 
     public WlRender(Context context) {
         this.context = context;
@@ -38,6 +65,13 @@ public class WlRender implements GLSurfaceView.Renderer {
                 .put(vertexData);
 
         vertexBuffer.position(0);
+
+        this.textureBuffer = ByteBuffer.allocateDirect(textureData.length * 4)
+                .order(ByteOrder.nativeOrder())
+                .asFloatBuffer()
+                .put(textureData);
+
+        textureBuffer.position(0);
     }
 
     @Override
@@ -48,7 +82,37 @@ public class WlRender implements GLSurfaceView.Renderer {
             program = WlShaderUtil.createProgram(vertexSource, fragmentSource);
             if (program > 0) {
                 avPosition = GLES20.glGetAttribLocation(program, "av_Position");
-                afColor = GLES20.glGetUniformLocation(program, "af_Color");
+                //afColor = GLES20.glGetUniformLocation(program, "af_Color");
+                afPosition = GLES20.glGetAttribLocation(program, "af_Position");
+                sTexture = GLES20.glGetUniformLocation(program, "sTexture");
+
+                int[] textureIds = new int[1];
+                //生成ID。offset表示？
+                GLES20.glGenTextures(1, textureIds, 0);
+
+                if (textureIds[0] == 0) {
+                    return;
+                }
+
+                textureId = textureIds[0];
+                //将生成的ID绑定到纹理通道
+                GLES20.glBindBuffer(GLES20.GL_TEXTURE_2D, textureId);
+
+                GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_REPEAT);
+                GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_REPEAT);
+                GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+                GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+
+                Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.a);
+                if (bitmap == null) {
+                    return;
+                }
+                //将Bitmap对象与当前纹理通道绑定，而当前纹理通道已经绑定好了ID，从而达到了ID与纹理的间接绑定
+                // level?border?将Bitmap对象与当前纹理通道绑定，而当前纹理通道已经绑定好了ID，从而达到了ID与纹理的间接绑定
+                GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
+                bitmap.recycle();
+                bitmap = null;
+
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -66,11 +130,15 @@ public class WlRender implements GLSurfaceView.Renderer {
         //    GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         GLES20.glUseProgram(program);
 
-        GLES20.glUniform4f(afColor, 1f, 1f, 0f, 1f);
+        //GLES20.glUniform4f(afColor, 1f, 1f, 0f, 1f);
 
         GLES20.glEnableVertexAttribArray(avPosition);
         GLES20.glVertexAttribPointer(avPosition, 2, GLES20.GL_FLOAT, false, 8
                 , vertexBuffer);
+
+        GLES20.glEnableVertexAttribArray(afPosition);
+        GLES20.glVertexAttribPointer(afPosition, 2, GLES20.GL_FLOAT, false, 8
+                , textureBuffer);
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
     }
 }
