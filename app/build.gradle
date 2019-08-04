@@ -33,3 +33,115 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 }
+
+class GreetingTask extends DefaultTask{
+    String greet = "dadffd"
+
+    @Option(option = "greet", description = "Configures the greet.")
+    public void setGreet(String greet){
+        this.greet = greet
+    }
+
+    @TaskAction
+    def greet(){
+        println greet
+    }
+}
+
+task hello(type:GreetingTask){
+    greet = "greet"
+}
+
+task incrementalReverse(type: IncrementalReverseTask) {
+    inputDir = file('inputs')
+    outputDir = file("$buildDir/outputs")
+   // inputProperty = project.properties['taskInputProperty'] ?: 'original'
+}
+
+class IncrementalReverseTask extends DefaultTask {
+    @InputDirectory
+    def File inputDir
+
+    @OutputDirectory
+    def File outputDir
+
+//    @Input
+//    def inputProperty
+
+    @TaskAction
+    void execute(IncrementalTaskInputs inputs) {
+        println inputs.incremental ? 'CHANGED inputs considered out of date'
+                : 'ALL inputs considered out of date'
+        if (!inputs.incremental)
+            project.delete(outputDir.listFiles())
+
+        inputs.outOfDate { change ->
+            if (change.file.directory) return
+
+            println "out of date: ${change.file.name}"
+            def targetFile = new File(outputDir, change.file.name)
+            targetFile.text = change.file.text.reverse()
+        }
+
+        inputs.removed { change ->
+            if (change.file.directory) return
+
+            println "removed: ${change.file.name}"
+            def targetFile = new File(outputDir, change.file.name)
+            targetFile.delete()
+        }
+    }
+}
+
+
+class GreetingPluginExtension {
+    String message
+    String greeter
+}
+
+class GreetPlugin implements Plugin<Project> {
+    @Override
+    void apply(Project target) {
+        def extension = target.extensions.create("greeting",GreetingPluginExtension)
+        target.task("g"){
+            doLast {
+                println "${extension.message} from ${extension.greeter}"
+            }
+        }
+    }
+}
+
+apply plugin: GreetPlugin
+
+greeting {
+    message = 'Hi'
+    greeter = 'Gradle'
+}
+
+class GreetingToFileTask extends DefaultTask {
+
+    def destination
+
+    File getDestination() {
+        project.file(destination)
+    }
+
+    @TaskAction
+    def greet() {
+        def file = getDestination()
+        file.parentFile.mkdirs()
+        file.write 'Hello!'
+    }
+}
+
+task greet(type: GreetingToFileTask) {
+    destination = { project.greetingFile }
+}
+
+task sayGreeting(dependsOn: greet) {
+    doLast {
+        println file(greetingFile).text
+    }
+}
+
+ext.greetingFile = "$buildDir/hello.txt"

@@ -87,7 +87,7 @@ public class WlRender implements GLSurfaceView.Renderer {
                 sTexture = GLES20.glGetUniformLocation(program, "sTexture");
 
                 int[] textureIds = new int[1];
-                //生成ID。offset表示？
+                //生成纹理ID。offset表示？
                 GLES20.glGenTextures(1, textureIds, 0);
 
                 if (textureIds[0] == 0) {
@@ -97,9 +97,12 @@ public class WlRender implements GLSurfaceView.Renderer {
                 textureId = textureIds[0];
                 //将生成的ID绑定到纹理通道
                 GLES20.glBindBuffer(GLES20.GL_TEXTURE_2D, textureId);
-
+                //顶点坐标超出纹理坐标的部分对纹理的显示处理（GL_REPEAT表示纹理重复显示）
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_REPEAT);
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_REPEAT);
+                //当视频尺寸和屏幕尺寸不一致的时候，如何进行缩放的配置
+                //GL_LINEAR表示使用距离渲染像素中心最近的4个纹理像素加权平均值
+                //GL_TEXTURE_MIN_FILTER表示缩小的情况，GL_TEXTURE_MAG_FILTER表示放大的情况
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
 
@@ -111,7 +114,6 @@ public class WlRender implements GLSurfaceView.Renderer {
                 // level?border?将Bitmap对象与当前纹理通道绑定，而当前纹理通道已经绑定好了ID，从而达到了ID与纹理的间接绑定
                 GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
                 bitmap.recycle();
-                bitmap = null;
 
             }
         } catch (IOException e) {
