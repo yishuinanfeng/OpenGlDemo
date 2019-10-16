@@ -21,6 +21,9 @@ public class WlRender implements GLSurfaceView.Renderer {
     private int avPosition;
     //纹理坐标
     private int afPosition;
+    private int red;
+    private int green;
+    private int blue;
     private int sTexture;
     private int textureId;
     //private int afColor;
@@ -40,11 +43,10 @@ public class WlRender implements GLSurfaceView.Renderer {
 //            1f, 1f,
 //            0f, 0f,
 //            1f, 0f
-            0f,0f,
-            1f,0f,
-            0f,1f,
-            1f,1f
-
+            0f, 0f,
+            1f, 0f,
+            0f, 1f,
+            1f, 1f
 
 
 //            0f,0f,
@@ -84,7 +86,10 @@ public class WlRender implements GLSurfaceView.Renderer {
                 avPosition = GLES20.glGetAttribLocation(program, "av_Position");
                 //afColor = GLES20.glGetUniformLocation(program, "af_Color");
                 afPosition = GLES20.glGetAttribLocation(program, "af_Position");
-                sTexture = GLES20.glGetUniformLocation(program, "sTexture");
+                red = GLES20.glGetAttribLocation(program, "red");
+                green = GLES20.glGetAttribLocation(program, "green");
+                blue = GLES20.glGetAttribLocation(program, "blue");
+                // sTexture = GLES20.glGetUniformLocation(program, "sTexture");
 
                 int[] textureIds = new int[1];
                 //生成纹理ID。offset表示？
@@ -113,6 +118,7 @@ public class WlRender implements GLSurfaceView.Renderer {
                 //将Bitmap对象与当前纹理通道绑定，而当前纹理通道已经绑定好了ID，从而达到了ID与纹理的间接绑定
                 // level?border?将Bitmap对象与当前纹理通道绑定，而当前纹理通道已经绑定好了ID，从而达到了ID与纹理的间接绑定
                 GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
+
                 bitmap.recycle();
 
             }
@@ -141,6 +147,28 @@ public class WlRender implements GLSurfaceView.Renderer {
         GLES20.glEnableVertexAttribArray(afPosition);
         GLES20.glVertexAttribPointer(afPosition, 2, GLES20.GL_FLOAT, false, 8
                 , textureBuffer);
+
+        GLES20.glVertexAttrib1f(red, r);
+        GLES20.glVertexAttrib1f(green, g);
+        GLES20.glVertexAttrib1f(blue, b);
+
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+    }
+
+
+    private float r;
+    private float g;
+    private float b;
+
+    public void changeRed(float r) {
+        this.r = r;
+    }
+
+    public void changeGreen(float g) {
+        this.g = g;
+    }
+
+    public void changeBlue(float b) {
+        this.b = b;
     }
 }

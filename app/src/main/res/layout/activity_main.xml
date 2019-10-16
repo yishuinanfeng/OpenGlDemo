@@ -1,13 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MainActivity">
+                                                   xmlns:app="http://schemas.android.com/apk/res-auto"
+                                                   xmlns:tools="http://schemas.android.com/tools"
+                                                   android:layout_width="match_parent"
+                                                   android:layout_height="match_parent"
+                                                   tools:context=".MainActivity">
 
     <com.example.opengldemo.WlGLSurfaceView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+            android:id="@+id/surfaceView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toTopOf="@+id/seekbar1"
+            app:layout_constraintTop_toTopOf="parent"
+    />
+
+    <SeekBar
+            android:id="@+id/seekbar1"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            app:layout_constraintBottom_toTopOf="@+id/seekbar2"
+    />
+
+    <SeekBar
+            android:id="@+id/seekbar2"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            app:layout_constraintBottom_toTopOf="@+id/seekbar3"
+    />
+
+    <SeekBar
+            android:id="@+id/seekbar3"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+    />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
