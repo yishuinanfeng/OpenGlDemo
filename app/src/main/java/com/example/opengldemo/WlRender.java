@@ -29,10 +29,15 @@ public class WlRender implements GLSurfaceView.Renderer {
     //private int afColor;
 
     private final float[] vertexData = {
-            -1f, -1f,
-            1f, -1f,
+//            -1f, -1f,
+//            1f, -1f,
+//            -1f, 1f,
+//            1f, 1f
+
             -1f, 1f,
-            1f, 1f
+            1f, 1f,
+            -1f, -1f,
+            1f, -1f
 //            0f, 1f,
 //            0f, -1f,
 //            1f, 0f
@@ -43,10 +48,22 @@ public class WlRender implements GLSurfaceView.Renderer {
 //            1f, 1f,
 //            0f, 0f,
 //            1f, 0f
+
+
+//            0f, 0f,
+//            1f, 0f,
+//            0f, 1f,
+//            1f, 1f
+
             0f, 0f,
-            1f, 0f,
-            0f, 1f,
-            1f, 1f
+            1.5f, 0f,
+            0f, 1.5f,
+            1.5f, 1.5f
+
+//            0f, 0f,
+//            0f, 0.5f,
+//            0.5f, 0.5f,
+//            0.5f, 0f
 
 
 //            0f,0f,
@@ -102,9 +119,11 @@ public class WlRender implements GLSurfaceView.Renderer {
                 textureId = textureIds[0];
                 //将生成的ID绑定到纹理通道
                 GLES20.glBindBuffer(GLES20.GL_TEXTURE_2D, textureId);
-                //顶点坐标超出纹理坐标的部分对纹理的显示处理（GL_REPEAT表示纹理重复显示）
-                GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_REPEAT);
-                GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_REPEAT);
+                //纹理坐标超出1的部分对纹理的显示处理（GL_REPEAT表示纹理重复显示）
+                //横向
+                GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_MIRRORED_REPEAT);
+                //纵向
+                GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_MIRRORED_REPEAT);
                 //当视频尺寸和屏幕尺寸不一致的时候，如何进行缩放的配置
                 //GL_LINEAR表示使用距离渲染像素中心最近的4个纹理像素加权平均值
                 //GL_TEXTURE_MIN_FILTER表示缩小的情况，GL_TEXTURE_MAG_FILTER表示放大的情况
