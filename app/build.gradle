@@ -4,21 +4,51 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
 
+def keystorePropertiesFile = rootProject.file("sign.properties")
+def keystoreProperties = new Properties()
+keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
+//平时打包的文件名包含的时间
+static def releaseTime() {
+    return new Date().format("yyyyMMddhhmm", TimeZone.getTimeZone("GMT+8"))
+}
+
 android {
     compileSdkVersion 28
 //    buildToolsVersion "29.0.0"
     defaultConfig {
-        applicationId "com.example.opengldemo"
+        applicationId "com.easy.man"
         minSdkVersion 19
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['KEY_ALIAS']
+            keyPassword keystoreProperties['KEY_PASSWORD']
+            storeFile file(keystoreProperties['STORE_FILE'])
+            storePassword keystoreProperties['STORE_PASSWORD']
+        }
+    }
+
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            zipAlignEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+        applicationVariants.all { variant ->
+            variant.outputs.all { output ->
+                def outputFile = output.outputFile
+                if (outputFile != null && outputFile.name.endsWith('.apk')) {
+                    def newFileName = "EasyFilter${defaultConfig.versionName}_${variant.buildType.name}_${releaseTime()}.apk"
+                    outputFileName = outputFile.name.replace(outputFile.name, newFileName)
+                }
+            }
         }
     }
 }

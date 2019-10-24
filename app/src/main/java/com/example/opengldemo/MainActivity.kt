@@ -13,6 +13,10 @@ class MainActivity : AppCompatActivity() {
         this.requestWindowFeature(Window.FEATURE_NO_TITLE)
         setContentView(R.layout.activity_main)
 
+        surfaceView.changeRed(0.5f)
+        surfaceView.changeGreen(0.5f)
+        surfaceView.changeBlue(0.5f)
+
         seekbar1.setOnSeekBarChangeListener(object :SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 surfaceView.changeRed(progress/50f)
