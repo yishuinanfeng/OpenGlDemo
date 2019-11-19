@@ -14,6 +14,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
+import static android.opengl.Matrix.orthoM;
+
 public class WlRender implements GLSurfaceView.Renderer {
 
     private Context context;
@@ -26,6 +28,8 @@ public class WlRender implements GLSurfaceView.Renderer {
     private int blue;
     private int sTexture;
     private int textureId;
+    private final float[] projectionMatrix = new float[16];
+    private int uMatrixLocation;
     //private int afColor;
 
     private final float[] vertexData = {
@@ -103,6 +107,7 @@ public class WlRender implements GLSurfaceView.Renderer {
                 avPosition = GLES20.glGetAttribLocation(program, "av_Position");
                 //afColor = GLES20.glGetUniformLocation(program, "af_Color");
                 afPosition = GLES20.glGetAttribLocation(program, "af_Position");
+                uMatrixLocation = GLES20.glGetUniformLocation(program, "u_Matrix");
                 red = GLES20.glGetAttribLocation(program, "red");
                 green = GLES20.glGetAttribLocation(program, "green");
                 blue = GLES20.glGetAttribLocation(program, "blue");
@@ -149,6 +154,15 @@ public class WlRender implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceChanged(GL10 gl10, int width, int height) {
         GLES20.glViewport(0, 0, width, height);
+        //正交投影，将显示区域的偏小的边设为1，偏大的边看作大边和小边的比例
+        final float aspectRatio = width > height ?
+                (float) width / (float) height : (float) height / (float) width;
+        if (width > height) {
+            orthoM(projectionMatrix, 0, -aspectRatio, aspectRatio, -1f, 1f, -1f, 1f);
+        } else {
+            orthoM(projectionMatrix, 0, -1f, 1f, -aspectRatio, aspectRatio, -1f, 1f);
+        }
+
     }
 
     @Override
@@ -158,6 +172,8 @@ public class WlRender implements GLSurfaceView.Renderer {
         GLES20.glUseProgram(program);
 
         //GLES20.glUniform4f(afColor, 1f, 1f, 0f, 1f);
+
+        GLES20.glUniformMatrix4fv(uMatrixLocation, 1, false, projectionMatrix, 0);
 
         GLES20.glEnableVertexAttribArray(avPosition);
         GLES20.glVertexAttribPointer(avPosition, 2, GLES20.GL_FLOAT, false, 8

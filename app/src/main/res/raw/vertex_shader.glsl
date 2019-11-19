@@ -7,8 +7,9 @@ attribute float blue;
 varying float r;
 varying float g;
 varying float b;
+uniform mat4 u_Matrix;
 void main(){
-    gl_Position = av_Position;
+    gl_Position = u_Matrix*av_Position;
     v_texPo = af_Position;
     r = red;
     g = green;
