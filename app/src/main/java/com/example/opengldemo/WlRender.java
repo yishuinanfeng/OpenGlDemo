@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
+import static android.opengl.GLES20.*;
 import static android.opengl.Matrix.orthoM;
 
 public class WlRender implements GLSurfaceView.Renderer {
@@ -30,6 +31,7 @@ public class WlRender implements GLSurfaceView.Renderer {
     private int textureId;
     private final float[] projectionMatrix = new float[16];
     private int uMatrixLocation;
+    private int vboId;
     //private int afColor;
 
     private final float[] vertexData = {
@@ -111,6 +113,16 @@ public class WlRender implements GLSurfaceView.Renderer {
                 red = GLES20.glGetAttribLocation(program, "red");
                 green = GLES20.glGetAttribLocation(program, "green");
                 blue = GLES20.glGetAttribLocation(program, "blue");
+                //vbo的创建和绑定
+                int[] vbos = new int[1];
+                glGenBuffers(1, vbos, 0);
+                vboId = vbos[0];
+                glBindBuffer(GL_ARRAY_BUFFER, vboId);
+                glBufferData(GL_ARRAY_BUFFER, vertexData.length * 4 + textureData.length * 4, null, GL_STATIC_DRAW);
+                glBufferSubData(GL_ARRAY_BUFFER, 0, vertexData.length * 4, vertexBuffer);
+                glBufferSubData(GL_ARRAY_BUFFER, vertexData.length * 4, textureData.length * 4, textureBuffer);
+                glBindBuffer(GL_ARRAY_BUFFER, 0);
+
                 // sTexture = GLES20.glGetUniformLocation(program, "sTexture");
 
                 int[] textureIds = new int[1];
@@ -142,7 +154,7 @@ public class WlRender implements GLSurfaceView.Renderer {
                 //将Bitmap对象与当前纹理通道绑定，而当前纹理通道已经绑定好了ID，从而达到了ID与纹理的间接绑定
                 // level?border?将Bitmap对象与当前纹理通道绑定，而当前纹理通道已经绑定好了ID，从而达到了ID与纹理的间接绑定
                 GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
-
+                //当bitmap的数据已经绑定到纹理单元后，就可以释放空间
                 bitmap.recycle();
 
             }
@@ -175,19 +187,23 @@ public class WlRender implements GLSurfaceView.Renderer {
 
         GLES20.glUniformMatrix4fv(uMatrixLocation, 1, false, projectionMatrix, 0);
 
+        glBindBuffer(GL_ARRAY_BUFFER, vboId);
+
         GLES20.glEnableVertexAttribArray(avPosition);
         GLES20.glVertexAttribPointer(avPosition, 2, GLES20.GL_FLOAT, false, 8
-                , vertexBuffer);
+                , 0);
 
         GLES20.glEnableVertexAttribArray(afPosition);
         GLES20.glVertexAttribPointer(afPosition, 2, GLES20.GL_FLOAT, false, 8
-                , textureBuffer);
+                , vertexData.length * 4 );
 
         GLES20.glVertexAttrib1f(red, r);
         GLES20.glVertexAttrib1f(green, g);
         GLES20.glVertexAttrib1f(blue, b);
-
+        //从缓存的数组的0开始绘制4个点
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
     }
 
 
