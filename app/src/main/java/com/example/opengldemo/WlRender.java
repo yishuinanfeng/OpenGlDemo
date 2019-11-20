@@ -17,6 +17,7 @@ import java.nio.FloatBuffer;
 
 import static android.opengl.GLES20.*;
 import static android.opengl.Matrix.orthoM;
+import static android.opengl.Matrix.rotateM;
 
 public class WlRender implements GLSurfaceView.Renderer {
 
@@ -56,16 +57,16 @@ public class WlRender implements GLSurfaceView.Renderer {
     };
 
     private final float[] textureData = {
-//            0f, 1f,
-//            1f, 1f,
-//            0f, 0f,
-//            1f, 0f
-
-
-            0f, 0f,
-            1f, 0f,
             0f, 1f,
-            1f, 1f
+            1f, 1f,
+            0f, 0f,
+            1f, 0f
+
+//
+//            0f, 0f,
+//            1f, 0f,
+//            0f, 1f,
+//            1f, 1f
 
 //            0f, 0f,
 //            1.5f, 0f,
@@ -136,6 +137,7 @@ public class WlRender implements GLSurfaceView.Renderer {
                 fboId = fbos[0];
                 Log.e(TAG, "fboId=" + fboId);
                 //绑定FrameBuffer到当前的绘制环境。缓冲绑定到fbo上。后面绑定到纹理目标的纹理对象才可以绑定到该fbo对象
+                //GL_FRAMEBUFFER为帧缓冲的目标
                 glBindFramebuffer(GL_FRAMEBUFFER, fboId);
 
 
@@ -163,8 +165,10 @@ public class WlRender implements GLSurfaceView.Renderer {
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
                 //设置fbo大小（需要在纹理对象绑定到纹理目标之后）
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 720, 1280, 0, GL_RGBA, GL_UNSIGNED_BYTE, null);
+                //尺寸为缓冲区显示大小，显示出来的纹理图片会以这个尺寸为全品按比例显示？
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1000, 1000, 0, GL_RGBA, GL_UNSIGNED_BYTE, null);
                 //纹理对象绑定到fbo，后面对fbo的操作就是对纹理的操作（将纹理对象挂载到FrameBuffer上，纹理对象会存储绘制到FrameBuffer的颜色信息）
+                //GL_COLOR_ATTACHMENT0表示采样颜色缓冲
                 glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
                 if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
                     Log.e(TAG, "fbo fail");
@@ -225,6 +229,8 @@ public class WlRender implements GLSurfaceView.Renderer {
             orthoM(projectionMatrix, 0, -1f, 1f, -aspectRatio, aspectRatio, -1f, 1f);
         }
 
+        rotateM(projectionMatrix,0,180,0,0,1);
+
         fboRender.onChange(width, height);
 
     }
@@ -261,6 +267,7 @@ public class WlRender implements GLSurfaceView.Renderer {
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+        //只有解绑帧缓冲对象才可以绘制到屏幕（The value zero is reserved to represent the default framebuffer provided by the windowing system）
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
 
         fboRender.onDraw(textureId);
