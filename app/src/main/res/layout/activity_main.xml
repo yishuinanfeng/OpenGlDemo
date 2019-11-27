@@ -7,35 +7,10 @@
                                                    tools:context=".MainActivity">
 
     <com.example.opengldemo.WlGLSurfaceView
-            android:id="@+id/surfaceView"
+            android:id="@+id/surfaceview"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            app:layout_constraintBottom_toTopOf="@+id/seekbar1"
-            app:layout_constraintTop_toTopOf="parent"
+            android:layout_height="match_parent"
     />
 
-    <SeekBar
-            android:id="@+id/seekbar1"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            app:layout_constraintBottom_toTopOf="@+id/seekbar2"
-            android:progress="50"
-    />
-
-    <SeekBar
-            android:id="@+id/seekbar2"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            app:layout_constraintBottom_toTopOf="@+id/seekbar3"
-            android:progress="50"
-    />
-
-    <SeekBar
-            android:id="@+id/seekbar3"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:progress="50"
-    />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

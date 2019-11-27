@@ -4,13 +4,13 @@ import android.content.Context
 import android.opengl.GLSurfaceView.RENDERMODE_CONTINUOUSLY
 import android.opengl.GLSurfaceView.RENDERMODE_WHEN_DIRTY
 import android.util.AttributeSet
+import android.util.Log
 import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import java.lang.ref.WeakReference
 import javax.microedition.khronos.egl.EGLContext
-val RENDERMODE_WHEN_DIRTY = 0
-val RENDERMODE_CONTINUOUSLY = 1
+
 
 open class CustomGlSurfaceView : SurfaceView, SurfaceHolder.Callback {
 
@@ -20,6 +20,11 @@ open class CustomGlSurfaceView : SurfaceView, SurfaceHolder.Callback {
     private var mRender: CustomRender? = null
 
     private var mRenderMode = RENDERMODE_CONTINUOUSLY
+
+    companion object {
+        const val RENDERMODE_WHEN_DIRTY = 0
+        const val RENDERMODE_CONTINUOUSLY = 1
+    }
 
     constructor(ctx: Context) : super(ctx) {
         init()
@@ -34,12 +39,14 @@ open class CustomGlSurfaceView : SurfaceView, SurfaceHolder.Callback {
     }
 
     override fun surfaceChanged(holder: SurfaceHolder?, format: Int, width: Int, height: Int) {
+        Log.d("CustomGlSurfaceView", "surfaceChanged")
         eglThread?.width = width
         eglThread?.height = height
         eglThread?.isChange = true
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder?) {
+        Log.d("CustomGlSurfaceView", "surfaceDestroyed")
         eglThread?.onDestroy()
         eglThread = null
         mSurface = null
@@ -47,6 +54,7 @@ open class CustomGlSurfaceView : SurfaceView, SurfaceHolder.Callback {
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
+        Log.d("CustomGlSurfaceView", "surfaceCreated")
         if (mSurface == null) {
             mSurface = holder.surface
         }
@@ -80,7 +88,7 @@ open class CustomGlSurfaceView : SurfaceView, SurfaceHolder.Callback {
         fun onDrawFrame()
     }
 
-    public fun requestRender() {
+    fun requestRender() {
         eglThread?.requestRender()
     }
 
@@ -98,13 +106,14 @@ open class CustomGlSurfaceView : SurfaceView, SurfaceHolder.Callback {
         var height: Int = 0
 
         override fun run() {
+            Log.d("CustomGlSurfaceView", "EglThread run")
             eglHelper = EglHelper()
-            val lock = Object()
+            lock = Object()
             surfaceViewReference.get()?.let {
-                if (it.mSurface == null || it.mEglContext == null) {
+                if (it.mSurface == null) {
                     return
                 }
-                eglHelper!!.initEgl(it.mSurface!!, it.mEglContext!!)
+                eglHelper!!.initEgl(it.mSurface!!, it.mEglContext)
             }
 
             while (true) {
@@ -112,26 +121,27 @@ open class CustomGlSurfaceView : SurfaceView, SurfaceHolder.Callback {
                     release()
                     break
                 }
-            }
-            //已经开始才进行画面刷新
-            if (isStart) {
-                surfaceViewReference.get()?.let {
-                    when {
-                        it.mRenderMode == RENDERMODE_WHEN_DIRTY -> synchronized(lock) {
-                            //
-                            lock.wait()
+
+                //已经开始才进行画面刷新
+                if (isStart) {
+                    surfaceViewReference.get()?.let {
+                        when {
+                            it.mRenderMode == RENDERMODE_WHEN_DIRTY -> synchronized(lock!!) {
+                                //
+                                lock!!.wait()
+                            }
+                            it.mRenderMode == RENDERMODE_CONTINUOUSLY -> sleep(60)
+                            else -> throw RuntimeException("mRenderMode is wrong value")
                         }
-                        it.mRenderMode == RENDERMODE_CONTINUOUSLY -> sleep(60)
-                        else -> throw RuntimeException("mRenderMode is wrong value")
                     }
                 }
+
+                onCreate()
+                onChange(width, height)
+                onDraw()
+
+                isStart = true
             }
-
-            onCreate()
-            onChange(width, height)
-            onDraw()
-
-            isStart = true
         }
 
         private fun onDraw() {
@@ -147,10 +157,11 @@ open class CustomGlSurfaceView : SurfaceView, SurfaceHolder.Callback {
             }
         }
 
+
         /**
          * 手动刷新
          */
-        public fun requestRender() {
+         fun requestRender() {
             lock?.let {
                 synchronized(it) {
                     it.notifyAll()
@@ -158,7 +169,7 @@ open class CustomGlSurfaceView : SurfaceView, SurfaceHolder.Callback {
             }
         }
 
-        public fun onDestroy() {
+        fun onDestroy() {
             isExit = true
             //??
             requestRender()
