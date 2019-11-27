@@ -8,9 +8,14 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
+import static android.opengl.Matrix.orthoM;
+import static android.opengl.Matrix.rotateM;
+
 public class FboRender {
 
     private Context context;
+    private final float[] projectionMatrix = new float[16];
+    private int uMatrixLocation;
 
     private float[] vertexData = {
             -1f, -1f,
@@ -60,7 +65,7 @@ public class FboRender {
 
     public void onCreate()
     {
-        String vertexSource = null;
+        String vertexSource;
         try {
             vertexSource = WlShaderUtil.readRawTExt(context, R.raw.vertex_shader2);
             String fragmentSource = WlShaderUtil.readRawTExt(context, R.raw.fragment_shader);
@@ -69,6 +74,7 @@ public class FboRender {
 
             vPosition = GLES20.glGetAttribLocation(program, "av_Position");
             fPosition = GLES20.glGetAttribLocation(program, "af_Position");
+            uMatrixLocation = GLES20.glGetUniformLocation(program, "u_Matrix");
         //    sampler = GLES20.glGetUniformLocation(program, "sTexture");
 
             int [] vbos = new int[1];
@@ -89,6 +95,17 @@ public class FboRender {
     public void onChange(int width, int height)
     {
         GLES20.glViewport(0, 0, width, height);
+        //正交投影，将显示区域的偏小的边设为1，偏大的边看作大边和小边的比例
+        final float aspectRatio = width > height ?
+                (float) width / (float) height : (float) height / (float) width;
+        if (width > height) {
+            orthoM(projectionMatrix, 0, -aspectRatio, aspectRatio, -1f, 1f, -1f, 1f);
+        } else {
+            orthoM(projectionMatrix, 0, -1f, 1f, -aspectRatio, aspectRatio, -1f, 1f);
+        }
+
+        //   rotateM(projectionMatrix, 0, 180, 0, 0, 1);
+        rotateM(projectionMatrix, 0, 180, 1, 0, 0);
     }
 
     public void onDraw(int textureId)
@@ -97,6 +114,8 @@ public class FboRender {
         GLES20.glClearColor(1f,0f, 0f, 1f);
 
         GLES20.glUseProgram(program);
+
+      //  GLES20.glUniformMatrix4fv(uMatrixLocation, 1, false, projectionMatrix, 0);
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
 

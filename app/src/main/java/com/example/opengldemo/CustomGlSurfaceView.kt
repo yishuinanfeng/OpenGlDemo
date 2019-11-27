@@ -63,7 +63,7 @@ open class CustomGlSurfaceView : SurfaceView, SurfaceHolder.Callback {
         eglThread!!.start()
     }
 
-    public fun setSurfaceAndEglContext(surface: Surface, eglContext: EGLContext) {
+    fun setSurfaceAndEglContext(surface: Surface?, eglContext: EGLContext?) {
         mSurface = surface
         mEglContext = eglContext
     }
@@ -175,7 +175,7 @@ open class CustomGlSurfaceView : SurfaceView, SurfaceHolder.Callback {
             requestRender()
         }
 
-        public fun getEglContext(): EGLContext? {
+        fun getEglContext(): EGLContext? {
             return eglHelper?.getEglContext()
         }
 
@@ -204,6 +204,10 @@ open class CustomGlSurfaceView : SurfaceView, SurfaceHolder.Callback {
             eglHelper = null
             lock = null
         }
+    }
+
+    fun getEglContext():EGLContext?{
+        return eglThread?.getEglContext()
     }
 
 }

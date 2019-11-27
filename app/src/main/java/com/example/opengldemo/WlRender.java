@@ -19,7 +19,7 @@ import static android.opengl.GLES20.*;
 import static android.opengl.Matrix.orthoM;
 import static android.opengl.Matrix.rotateM;
 
-public class WlRender implements GLSurfaceView.Renderer {
+public class WlRender implements CustomGlSurfaceView.CustomRender {
 
     private static final String TAG = WlRender.class.getSimpleName();
 
@@ -39,6 +39,12 @@ public class WlRender implements GLSurfaceView.Renderer {
     private int fboId;
     private int imageTextureId;
     private FboRender fboRender;
+    private OnTextureCreateListener onTextureCreateListener;
+
+    public void setOnTextureCreateListener(OnTextureCreateListener onTextureCreateListener) {
+        this.onTextureCreateListener = onTextureCreateListener;
+    }
+
     //private int afColor;
 
     private final float[] vertexData = {
@@ -108,10 +114,10 @@ public class WlRender implements GLSurfaceView.Renderer {
     }
 
     @Override
-    public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
+    public void onSurfaceCreated() {
         try {
             fboRender.onCreate();
-            String vertexSource = WlShaderUtil.readRawTExt(context, R.raw.vertex_shader);
+            String vertexSource = WlShaderUtil.readRawTExt(context, R.raw.vertex_shader2);
             String fragmentSource = WlShaderUtil.readRawTExt(context, R.raw.fragment_shader);
             program = WlShaderUtil.createProgram(vertexSource, fragmentSource);
             if (program > 0) {
@@ -119,9 +125,7 @@ public class WlRender implements GLSurfaceView.Renderer {
                 //afColor = GLES20.glGetUniformLocation(program, "af_Color");
                 afPosition = GLES20.glGetAttribLocation(program, "af_Position");
                 uMatrixLocation = GLES20.glGetUniformLocation(program, "u_Matrix");
-                red = GLES20.glGetAttribLocation(program, "red");
-                green = GLES20.glGetAttribLocation(program, "green");
-                blue = GLES20.glGetAttribLocation(program, "blue");
+
                 //vbo的创建和绑定,将顶点和纹理坐标数组放入显存，提高性能
                 int[] vbos = new int[1];
                 glGenBuffers(1, vbos, 0);
@@ -154,6 +158,7 @@ public class WlRender implements GLSurfaceView.Renderer {
                 textureId = textureIds[0];
                 //将生成的ID绑定到纹理通道
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
+                GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
                 //纹理坐标超出1的部分对纹理的显示处理（GL_REPEAT表示纹理重复显示）
                 //横向
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_MIRRORED_REPEAT);
@@ -166,9 +171,10 @@ public class WlRender implements GLSurfaceView.Renderer {
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
                 //设置fbo大小（需要在纹理对象绑定到纹理目标之后）
                 //尺寸为缓冲区显示大小，显示出来的纹理图片会以这个尺寸为全品按比例显示？
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1000, 1000, 0, GL_RGBA, GL_UNSIGNED_BYTE, null);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 720, 1280, 0, GL_RGBA, GL_UNSIGNED_BYTE, null);
                 //纹理对象绑定到fbo，后面对fbo的操作就是对纹理的操作（将纹理对象挂载到FrameBuffer上，纹理对象会存储绘制到FrameBuffer的颜色信息）
                 //GL_COLOR_ATTACHMENT0表示采样颜色缓冲
+                //textureId是被离屏渲染的纹理id
                 glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
                 if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
                     Log.e(TAG, "fbo fail");
@@ -190,6 +196,10 @@ public class WlRender implements GLSurfaceView.Renderer {
 
                 imageTextureId = loadTexture(R.drawable.a);
                 Log.e(TAG, "imageTextureId=" + imageTextureId);
+
+                if (onTextureCreateListener != null) {
+                    onTextureCreateListener.onTextureCreate(textureId);
+                }
                 //当bitmap的数据已经绑定到纹理单元后，就可以释放空间
                 //    bitmap.recycle();
 
@@ -218,7 +228,7 @@ public class WlRender implements GLSurfaceView.Renderer {
     }
 
     @Override
-    public void onSurfaceChanged(GL10 gl10, int width, int height) {
+    public void onSurfaceChanged(int width, int height) {
         GLES20.glViewport(0, 0, width, height);
         //正交投影，将显示区域的偏小的边设为1，偏大的边看作大边和小边的比例
         final float aspectRatio = width > height ?
@@ -229,14 +239,15 @@ public class WlRender implements GLSurfaceView.Renderer {
             orthoM(projectionMatrix, 0, -1f, 1f, -aspectRatio, aspectRatio, -1f, 1f);
         }
 
-        rotateM(projectionMatrix,0,180,0,0,1);
+        //   rotateM(projectionMatrix, 0, 180, 0, 0, 1);
+        rotateM(projectionMatrix, 0, 180, 1, 0, 0);
 
         fboRender.onChange(width, height);
 
     }
 
     @Override
-    public void onDrawFrame(GL10 gl10) {
+    public void onDrawFrame() {
         //绑定FrameBuffer到当前的绘制环境。后面的渲染都会渲染到fboId绑定的纹理对象上（离屏渲染）
         glBindFramebuffer(GL_FRAMEBUFFER, fboId);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
@@ -259,9 +270,6 @@ public class WlRender implements GLSurfaceView.Renderer {
         GLES20.glVertexAttribPointer(afPosition, 2, GLES20.GL_FLOAT, false, 8
                 , vertexData.length * 4);
 
-        GLES20.glVertexAttrib1f(red, r);
-        GLES20.glVertexAttrib1f(green, g);
-        GLES20.glVertexAttrib1f(blue, b);
         //从缓存的数组的0开始绘制4个点
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 
@@ -273,20 +281,11 @@ public class WlRender implements GLSurfaceView.Renderer {
         fboRender.onDraw(textureId);
     }
 
-
-    private float r;
-    private float g;
-    private float b;
-
-    public void changeRed(float r) {
-        this.r = r;
+    interface OnTextureCreateListener {
+        /**
+         * @param textureId 离屏渲染id
+         */
+        void onTextureCreate(int textureId);
     }
 
-    public void changeGreen(float g) {
-        this.g = g;
-    }
-
-    public void changeBlue(float b) {
-        this.b = b;
-    }
 }

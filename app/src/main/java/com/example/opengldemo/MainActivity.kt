@@ -2,11 +2,17 @@ package com.example.opengldemo
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.Window
+import android.widget.LinearLayout
 import android.widget.SeekBar
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
+
+    private val TAG = WlRender::class.java.simpleName
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -17,54 +23,27 @@ class MainActivity : AppCompatActivity() {
             surfaceview.requestRender()
         }
 
+        surfaceview.render.setOnTextureCreateListener { textureId ->
+            runOnUiThread {
 
+                Log.d(TAG, "OnTextureCreate")
 
-//        surfaceView.changeRed(0.5f)
-//        surfaceView.changeGreen(0.5f)
-//        surfaceView.changeBlue(0.5f)
-//
-//        seekbar1.setOnSeekBarChangeListener(object :SeekBar.OnSeekBarChangeListener{
-//            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-//                surfaceView.changeRed(progress/50f)
-//            }
-//
-//            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-//
-//            }
-//
-//            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-//
-//            }
-//
-//        })
-//        seekbar2.setOnSeekBarChangeListener(object :SeekBar.OnSeekBarChangeListener{
-//            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-//                surfaceView.changeGreen(progress/50f)
-//            }
-//
-//            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-//
-//            }
-//
-//            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-//
-//            }
-//
-//        })
-//
-//        seekbar3.setOnSeekBarChangeListener(object :SeekBar.OnSeekBarChangeListener{
-//            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-//                surfaceView.changeBlue(progress/50f)
-//            }
-//
-//            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-//
-//            }
-//
-//            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-//
-//            }
-//
-//        })
+                if (bottomMenu.childCount > 0) {
+                    bottomMenu.removeAllViews()
+                }
+
+                val mutilSurfaceView = MutilSurfaceView(this)
+                mutilSurfaceView.setSurfaceAndEglContext(null, surfaceview.getEglContext())
+                mutilSurfaceView.setTextureId(textureId)
+
+                val lp = LinearLayout.LayoutParams(MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+             //   lp.weight = 1f
+                mutilSurfaceView.layoutParams = lp
+
+                Log.d(TAG, "addView mutilSurfaceView")
+                bottomMenu.addView(mutilSurfaceView)
+            }
+        }
+
     }
 }

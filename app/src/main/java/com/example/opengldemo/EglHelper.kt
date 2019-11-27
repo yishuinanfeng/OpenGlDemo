@@ -23,7 +23,7 @@ class EglHelper {
         }
 
         //3.初始化EGL对象
-        val version = intArrayOf(0,0)
+        val version = IntArray(2)
         if (!mEgl!!.eglInitialize(mEglDisplay, version)) {
             throw RuntimeException("eglInitialize failed")
         }
@@ -41,7 +41,7 @@ class EglHelper {
         )
 
         //4.1 得到最匹配配置的个数
-        val configNums = intArrayOf(0)
+        val configNums = IntArray(1)
         if (!mEgl!!.eglChooseConfig(mEglDisplay, attributes, null, 1, configNums)) {
             throw IllegalArgumentException("eglChooseConfig failed")
         }
