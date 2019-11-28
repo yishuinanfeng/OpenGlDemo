@@ -22,16 +22,17 @@ import static android.opengl.Matrix.rotateM;
 public class WlRender implements CustomGlSurfaceView.CustomRender {
 
     private static final String TAG = WlRender.class.getSimpleName();
+    private int fboWidth = 720;
+    private int fboHeight = 1280;
 
     private Context context;
     private int program;
     private int avPosition;
     //纹理坐标
     private int afPosition;
-    private int red;
-    private int green;
-    private int blue;
-    private int sTexture;
+    private int width;
+    private int height;
+
     private int textureId;
     private final float[] projectionMatrix = new float[16];
     private int uMatrixLocation;
@@ -117,7 +118,7 @@ public class WlRender implements CustomGlSurfaceView.CustomRender {
     public void onSurfaceCreated() {
         try {
             fboRender.onCreate();
-            String vertexSource = WlShaderUtil.readRawTExt(context, R.raw.vertex_shader2);
+            String vertexSource = WlShaderUtil.readRawTExt(context, R.raw.vertex_shader);
             String fragmentSource = WlShaderUtil.readRawTExt(context, R.raw.fragment_shader);
             program = WlShaderUtil.createProgram(vertexSource, fragmentSource);
             if (program > 0) {
@@ -170,8 +171,8 @@ public class WlRender implements CustomGlSurfaceView.CustomRender {
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
                 //设置fbo大小（需要在纹理对象绑定到纹理目标之后）
-                //尺寸为缓冲区显示大小，显示出来的纹理图片会以这个尺寸为全品按比例显示？
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 720, 1280, 0, GL_RGBA, GL_UNSIGNED_BYTE, null);
+                //尺寸为缓冲区显示大小，显示出来的纹理图片会以这个尺寸为全尺寸按比例显示？
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fboWidth, fboHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, null);
                 //纹理对象绑定到fbo，后面对fbo的操作就是对纹理的操作（将纹理对象挂载到FrameBuffer上，纹理对象会存储绘制到FrameBuffer的颜色信息）
                 //GL_COLOR_ATTACHMENT0表示采样颜色缓冲
                 //textureId是被离屏渲染的纹理id
@@ -229,8 +230,12 @@ public class WlRender implements CustomGlSurfaceView.CustomRender {
 
     @Override
     public void onSurfaceChanged(int width, int height) {
-        GLES20.glViewport(0, 0, width, height);
+        //GLES20.glViewport(0, 0, width, height);
         //正交投影，将显示区域的偏小的边设为1，偏大的边看作大边和小边的比例
+        this.width = width;
+        this.height = height;
+        width = fboWidth;
+        height = fboHeight;
         final float aspectRatio = width > height ?
                 (float) width / (float) height : (float) height / (float) width;
         if (width > height) {
@@ -242,13 +247,15 @@ public class WlRender implements CustomGlSurfaceView.CustomRender {
         //   rotateM(projectionMatrix, 0, 180, 0, 0, 1);
         rotateM(projectionMatrix, 0, 180, 1, 0, 0);
 
-        fboRender.onChange(width, height);
+        fboRender.onChange(this.width, this.height);
 
     }
 
     @Override
     public void onDrawFrame() {
         //绑定FrameBuffer到当前的绘制环境。后面的渲染都会渲染到fboId绑定的纹理对象上（离屏渲染）
+        GLES20.glViewport(0, 0, fboWidth, fboHeight);
+
         glBindFramebuffer(GL_FRAMEBUFFER, fboId);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         //    GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -276,8 +283,8 @@ public class WlRender implements CustomGlSurfaceView.CustomRender {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
         //只有解绑帧缓冲对象才可以绘制到屏幕（The value zero is reserved to represent the default framebuffer provided by the windowing system）
+        GLES20.glViewport(0, 0, width, height);
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
-
         fboRender.onDraw(textureId);
     }
 

@@ -4,10 +4,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.Window
 import android.widget.LinearLayout
-import android.widget.SeekBar
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -32,16 +30,19 @@ class MainActivity : AppCompatActivity() {
                     bottomMenu.removeAllViews()
                 }
 
-                val mutilSurfaceView = MutilSurfaceView(this)
-                mutilSurfaceView.setSurfaceAndEglContext(null, surfaceview.getEglContext())
-                mutilSurfaceView.setTextureId(textureId)
+                for (i in 0..2){
+                    val mutilSurfaceView = MutilSurfaceView(this)
+                    mutilSurfaceView.setSurfaceAndEglContext(null, surfaceview.getEglContext())
+                    mutilSurfaceView.setTextureId(textureId,i)
 
-                val lp = LinearLayout.LayoutParams(MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-             //   lp.weight = 1f
-                mutilSurfaceView.layoutParams = lp
+                    val lp = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT)
+                    lp.weight = 1f
+                    mutilSurfaceView.layoutParams = lp
 
-                Log.d(TAG, "addView mutilSurfaceView")
-                bottomMenu.addView(mutilSurfaceView)
+                    Log.d(TAG, "addView mutilSurfaceView")
+                    bottomMenu.addView(mutilSurfaceView)
+                }
+
             }
         }
 

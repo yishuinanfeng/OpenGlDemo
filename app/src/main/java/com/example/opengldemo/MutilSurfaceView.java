@@ -30,9 +30,9 @@ public class MutilSurfaceView extends CustomGlSurfaceView {
         setRender(mutilRender);
     }
 
-    public void setTextureId(int textureId) {
+    public void setTextureId(int textureId, int index) {
         if (mutilRender != null) {
-            mutilRender.setTextureId(textureId);
+            mutilRender.setTextureId(textureId,index);
         }
     }
 

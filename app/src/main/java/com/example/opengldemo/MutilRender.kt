@@ -20,10 +20,12 @@ class MutilRender(val context: Context) : CustomGlSurfaceView.CustomRender {
     private var vertexBuffer: FloatBuffer
     private var fragmentBuffer: FloatBuffer
 
-    private val vertexData = floatArrayOf(-1f, 1f,
+    private val vertexData = floatArrayOf(
+        -1f, 1f,
         1f, 1f,
         -1f, -1f,
-        1f, -1f)
+        1f, -1f
+    )
 
     private val fragmentData = floatArrayOf(
         //            0f, 1f,
@@ -44,9 +46,11 @@ class MutilRender(val context: Context) : CustomGlSurfaceView.CustomRender {
     private val sampler: Int = 0
 
     private var vboId: Int = 0
+    private var index: Int = 0
 
-    fun setTextureId(texd: Int) {
+    fun setTextureId(texd: Int, index: Int) {
         textureId = texd
+        this.index = index;
     }
 
     init {
@@ -67,13 +71,27 @@ class MutilRender(val context: Context) : CustomGlSurfaceView.CustomRender {
     override fun onSurfaceCreated() {
         try {
             val vertexSource = WlShaderUtil.readRawTExt(context, R.raw.vertex_shader2)
-            val fragmentSource = WlShaderUtil.readRawTExt(context, R.raw.fragment_shader)
+            val fragmentSource: String
+            when (index) {
+                0 -> {
+                    fragmentSource = WlShaderUtil.readRawTExt(context, R.raw.fragment_shader1)
+                }
+                1 -> {
+                    fragmentSource = WlShaderUtil.readRawTExt(context, R.raw.fragment_shader2)
+
+                }
+                else -> {
+                    fragmentSource = WlShaderUtil.readRawTExt(context, R.raw.fragment_shader3)
+
+                }
+            }
+
 
             program = WlShaderUtil.createProgram(vertexSource, fragmentSource)
 
             vPosition = GLES20.glGetAttribLocation(program, "av_Position")
             fPosition = GLES20.glGetAttribLocation(program, "af_Position")
-           // uMatrixLocation = GLES20.glGetUniformLocation(program, "u_Matrix")
+            // uMatrixLocation = GLES20.glGetUniformLocation(program, "u_Matrix")
             //    sampler = GLES20.glGetUniformLocation(program, "sTexture");
 
             val vbos = IntArray(1)
