@@ -39,6 +39,7 @@ public class WlRender implements CustomGlSurfaceView.CustomRender {
     private int vboId;
     private int fboId;
     private int imageTextureId;
+    private int imageTextureId2;
     private FboRender fboRender;
     private OnTextureCreateListener onTextureCreateListener;
 
@@ -57,7 +58,12 @@ public class WlRender implements CustomGlSurfaceView.CustomRender {
             -1f, 1f,
             1f, 1f,
             -1f, -1f,
-            1f, -1f
+            1f, -1f,
+
+            -0.5f, 0.5f,
+            0.5f, 0.5f,
+            -0.5f, -0.5f,
+            0.5f, -0.5f
 //            0f, 1f,
 //            0f, -1f,
 //            1f, 0f
@@ -183,19 +189,11 @@ public class WlRender implements CustomGlSurfaceView.CustomRender {
                     Log.e(TAG, "fbo success");
                 }
 
-//                Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.a);
-//                if (bitmap == null) {
-//                    return;
-//                }
-                //将Bitmap对象与当前纹理通道绑定，而当前纹理通道已经绑定好了ID，从而达到了ID与纹理的间接绑定
-                // level?border?将Bitmap对象与当前纹理通道绑定，而当前纹理通道已经绑定好了ID，从而达到了ID与纹理的间接绑定
-                //     GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
-
-
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
                 imageTextureId = loadTexture(R.drawable.a);
+                imageTextureId2 = loadTexture(R.drawable.girl);
                 Log.e(TAG, "imageTextureId=" + imageTextureId);
 
                 if (onTextureCreateListener != null) {
@@ -266,8 +264,10 @@ public class WlRender implements CustomGlSurfaceView.CustomRender {
         GLES20.glUniformMatrix4fv(uMatrixLocation, 1, false, projectionMatrix, 0);
 
         //后面对imageTextureId纹理对象的渲染会渲染到和fbo绑定的TextureId纹理对象
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, imageTextureId);
         glBindBuffer(GL_ARRAY_BUFFER, vboId);
+
+        //绘制第一张纹理
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, imageTextureId);
         //绑定了vbo之后，后面的操作都是基于vbo的
         GLES20.glEnableVertexAttribArray(avPosition);
         GLES20.glVertexAttribPointer(avPosition, 2, GLES20.GL_FLOAT, false, 8
@@ -278,6 +278,22 @@ public class WlRender implements CustomGlSurfaceView.CustomRender {
                 , vertexData.length * 4);
 
         //从缓存的数组的0开始绘制4个点
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+
+        //绘制第二张纹理
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, imageTextureId2);
+        //绑定了vbo之后，后面的操作都是基于vbo的
+        GLES20.glEnableVertexAttribArray(avPosition);
+
+        //这里最后一个参数传入的是对应的顶点数组的偏移量4 * 8
+        GLES20.glVertexAttribPointer(avPosition, 2, GLES20.GL_FLOAT, false, 8
+                , 4 * 8);
+
+        GLES20.glEnableVertexAttribArray(afPosition);
+        GLES20.glVertexAttribPointer(afPosition, 2, GLES20.GL_FLOAT, false, 8
+                , vertexData.length * 4);
+
+        //从缓存的数组的glVertexAttribPointer指定的偏移量开始绘制4个点
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);

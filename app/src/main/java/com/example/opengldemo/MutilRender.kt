@@ -1,7 +1,9 @@
 package com.example.opengldemo
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.opengl.GLES20
+import android.opengl.GLUtils
 import android.opengl.Matrix.orthoM
 import android.opengl.Matrix.rotateM
 import java.io.IOException
@@ -24,7 +26,11 @@ class MutilRender(val context: Context) : CustomGlSurfaceView.CustomRender {
         -1f, 1f,
         1f, 1f,
         -1f, -1f,
-        1f, -1f
+        1f, -1f,
+
+        -0.5f, 0.5f,
+        0.5f, 0.5f,
+        -0.5f, -0.5f
     )
 
     private val fragmentData = floatArrayOf(
@@ -43,6 +49,7 @@ class MutilRender(val context: Context) : CustomGlSurfaceView.CustomRender {
     private var vPosition: Int = 0
     private var fPosition: Int = 0
     private var textureId: Int = 0
+    private var mixTextureId: Int = 0
     private val sampler: Int = 0
 
     private var vboId: Int = 0
@@ -108,6 +115,9 @@ class MutilRender(val context: Context) : CustomGlSurfaceView.CustomRender {
             GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, vertexData.size * 4, vertexBuffer)
             GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, vertexData.size * 4, fragmentData.size * 4, fragmentBuffer)
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
+
+            mixTextureId = loadTexture(R.drawable.androids)
+
         } catch (e: IOException) {
             e.printStackTrace()
         }
@@ -139,8 +149,10 @@ class MutilRender(val context: Context) : CustomGlSurfaceView.CustomRender {
 
         //  GLES20.glUniformMatrix4fv(uMatrixLocation, 1, false, projectionMatrix, 0);
 
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vboId)
+
+        //绘制第一张图
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
 
         GLES20.glEnableVertexAttribArray(vPosition)
         GLES20.glVertexAttribPointer(
@@ -154,9 +166,45 @@ class MutilRender(val context: Context) : CustomGlSurfaceView.CustomRender {
             vertexData.size * 4
         )
 
+        //绘制第二张图
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
+
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mixTextureId)
+
+        GLES20.glEnableVertexAttribArray(vPosition)
+        //这里最后一个参数传入的是对应的顶点数组的偏移量4 * 8
+        GLES20.glVertexAttribPointer(
+            vPosition, 2, GLES20.GL_FLOAT, false, 8,
+            4 * 8
+        )
+
+        GLES20.glEnableVertexAttribArray(fPosition)
+        GLES20.glVertexAttribPointer(
+            fPosition, 2, GLES20.GL_FLOAT, false, 8,
+            vertexData.size * 4
+        )
+
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
+    }
+
+    private fun loadTexture(src: Int): Int {
+        val textureIds = IntArray(1)
+        GLES20.glGenTextures(1, textureIds, 0)
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureIds[0])
+
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_MIRRORED_REPEAT)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_MIRRORED_REPEAT)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
+
+        val bitmap = BitmapFactory.decodeResource(context.resources, src)
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
+        bitmap.recycle()
+
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
+        return textureIds[0]
     }
 }
